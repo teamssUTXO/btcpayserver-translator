@@ -24,7 +24,7 @@ public static class SupportedLanguages
         ["ja"] = new LanguageInfo("ja-JP", "Japanese", "日本語"),
         ["ko"] = new LanguageInfo("ko", "Korean", "한국어"),
         ["zh-cn"] = new LanguageInfo("zh-SG", "Chinese (Simplified)", "简体中文"),
-        ["zh-tw"] = new  LanguageInfo( "zh-TW", "Chinese (Traditional)", "繁體中文"),
+        ["zh-tw"] = new LanguageInfo("zh-TW", "Chinese (Traditional)", "繁體中文"),
         ["ar"] = new LanguageInfo("ar", "Arabic", "العربية", true),
         ["he"] = new LanguageInfo("he", "Hebrew", "עברית", true),
         ["fa"] = new LanguageInfo("fa", "Persian", "فارسی", true),

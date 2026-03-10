@@ -116,7 +116,7 @@ This is useful when BTCPayServer adds new features and strings. Instead of retra
 
 ## Fetching Translations from a Running BTCPay Server
 
-By default the tool fetches strings by parsing `Translations.Default.cs` from GitHub. However, some strings are registered via Dependency Injection (by plugins, payment methods, etc.) and do not appear in that file.
+By default, the tool fetches strings by parsing `Translations.Default.cs` from GitHub. However, some strings are registered via Dependency Injection (by plugins, payment methods, etc.) and do not appear in that file.
 
 When BTCPay Server is running in debug/cheat mode, it exposes a `GET /cheat/translations/default-en` endpoint that returns the complete set of all registered English strings. Pass `--btcpay-url` to any command to use it instead:
 

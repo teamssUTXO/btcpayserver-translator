@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
-    <RootNamespace>BTCPayTranslator.Test</RootNamespace>
+    <RootNamespace>BTCPayTranslator.Tests</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,0 +1,139 @@
+using BTCPayTranslator.Tests.Infrastructure;
+using Xunit;
+
+namespace BTCPayTranslator.Tests.CLI;
+
+public class CliTests
+{
+    [Fact]
+    public async Task ListLanguages_ReturnsZero_AndPrintsKnownLanguage()
+    {
+        var result = await CliTestHost.RunAsync(["list-languages"]);
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("Supported Languages", result.CombinedOutput);
+        Assert.Contains("fr-FR", result.CombinedOutput);
+        Assert.Contains("co", result.CombinedOutput);
+    }
+
+    [Fact]
+    public async Task Translate_WithUnsupportedLanguage_ReturnsNonZero()
+    {
+        var result = await CliTestHost.RunAsync(["translate", "--language", "xx" ]);
+
+        Assert.NotEqual(0, result.ExitCode);
+        Assert.Contains("Unsupported language code", result.CombinedOutput);
+    }
+
+    [Fact]
+    public async Task Update_WhenTranslationFileMissing_ReturnsNonZero()
+    {
+        var outputDirectory = CreateTempDirectory();
+        var inputFile = CreateKnownTranslationsInputFile();
+        try
+        {
+            var result = await CliTestHost.RunAsync(
+                ["update", "--language", "fr"],
+                new Dictionary<string, string?>
+                {
+                    ["Translation__OutputDirectory"] = outputDirectory,
+                    ["Translation__InputFile"] = inputFile
+                });
+
+            Assert.NotEqual(0, result.ExitCode);
+            Assert.Contains("Translation file not found", result.CombinedOutput);
+        }
+        finally
+        {
+            if (Directory.Exists(outputDirectory))
+            {
+                Directory.Delete(outputDirectory, recursive: true);
+            }
+            
+            if (File.Exists(inputFile))
+            {
+                File.Delete(inputFile);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task UpdateAll_WhenNoTranslationFilesFound_ReturnsNonZero()
+    {
+        var outputDirectory = CreateTempDirectory();
+        try
+        {
+            var result = await CliTestHost.RunAsync(
+                ["update-all"],
+                new Dictionary<string, string?>
+                {
+                    ["Translation__OutputDirectory"] = outputDirectory
+                });
+
+            Assert.NotEqual(0, result.ExitCode);
+            Assert.Contains("No translation files found", result.CombinedOutput);
+        }
+        finally
+        {
+            if (Directory.Exists(outputDirectory))
+            {
+                Directory.Delete(outputDirectory, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task BatchUpdate_WithContinueOnError_ProcessesMultipleLanguages_AndReturnsNonZero()
+    {
+        var outputDirectory = CreateTempDirectory();
+        try
+        {
+            var result = await CliTestHost.RunAsync(
+                ["batch-update", "--languages", "fr", "xx", "--continue-on-error"],
+                new Dictionary<string, string?>
+                {
+                    ["Translation__OutputDirectory"] = outputDirectory
+                });
+
+            Assert.NotEqual(0, result.ExitCode);
+            Assert.Contains("fr", result.CombinedOutput);
+            Assert.Contains("xx", result.CombinedOutput);
+        }
+        finally
+        {
+            if (Directory.Exists(outputDirectory))
+            {
+                Directory.Delete(outputDirectory, recursive: true);
+            }
+        }
+    }
+
+    private static string CreateTempDirectory()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "BTCPayTranslator.CliTests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        return directory;
+    }
+
+    private static string CreateKnownTranslationsInputFile()
+    {
+        var path = Path.Combine(Path.GetTempPath(), "BTCPayTranslator.CliTests", Guid.NewGuid().ToString("N") + ".cs");
+        var parent = Path.GetDirectoryName(path)!;
+        Directory.CreateDirectory(parent);
+
+        var content = "public class Seed\n" +
+                      "{\n" +
+                      "    public void Load()\n" +
+                      "    {\n" +
+                      "        var knownTranslations = \"\"\"\n" +
+                      "{\n" +
+                      "  \"hello\": \"Hello\"\n" +
+                      "}\n" +
+                      "\"\"\";\n" +
+                      "    }\n" +
+                      "}\n";
+
+        File.WriteAllText(path, content);
+        return path;
+    }
+}

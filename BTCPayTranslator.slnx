@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/Misc/">
+    <File Path="README.md" />
+  </Folder >
+  <Project Path="Translator.Tests/BTCPayTranslator.Test.csproj" />
+  <Project Path="Translator/BTCPayTranslator.csproj" />
+</Solution>

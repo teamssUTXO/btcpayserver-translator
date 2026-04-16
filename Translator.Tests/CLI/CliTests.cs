@@ -13,7 +13,7 @@ public class CliTests
         Assert.Equal(0, result.ExitCode);
         Assert.Contains("Supported Languages", result.CombinedOutput);
         Assert.Contains("fr-FR", result.CombinedOutput);
-        Assert.Contains("co", result.CombinedOutput);
+        Assert.Contains("bs-BA", result.CombinedOutput);
     }
 
     [Fact]

@@ -31,7 +31,7 @@ public class TranslationExtractorTests
         };
         var incoming = new Dictionary<string, string>
         {
-            ["bye"] = "au revoir",
+            ["bye"] = "salut",
             ["thanks"] = "merci"
         };
 
@@ -39,7 +39,7 @@ public class TranslationExtractorTests
 
         Assert.Equal(3, merged.Count);
         Assert.Equal("bonjour", merged["hello"]);
-        Assert.Equal("au revoir", merged["bye"]);
+        Assert.Equal("salut", merged["bye"]);
         Assert.Equal("merci", merged["thanks"]);
     }
 

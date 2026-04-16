@@ -86,7 +86,7 @@ public class TranslationOrchestratorTests
         try
         {
             var (extractor, inputFile) = CreateExtractorFromKnownTranslationsFile(tempDir);
-            var fakeService = new FakeTranslationService(r => new TranslationResponse(r.Key, $"es-{r.SourceText}", true));
+            var fakeService = new FakeTranslationService(r => new TranslationResponse(r.Key, $"fr-{r.SourceText}", true));
             var fileWriter = new FileWriter(NullLogger<FileWriter>.Instance);
             var language = SupportedLanguages.GetLanguageInfo("fr")!;
             var outputPath = Path.Combine(tempDir, $"{language.Name.ToLower()}.json");

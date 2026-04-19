@@ -327,7 +327,7 @@
   "Change Role": "Promeni ulogu",
   "Change Storage provider": "Promeni Storage provajdera",
   "Change your {0} provider.": "Promenite vašeg {0} provajdera.",
-  "Change your password": "Promenite vašu lozinku",
+  "Change your password": "Promenite svoju lozinku",
   "Changes to the SSH settings are now permanently disabled in the BTCPay Server user interface": "Promene SSH podešavanja su sada trajno onemogućene u BTCPay Server korisničkom interfejsu",
   "Changing the role of user {0} failed: {1}": "Promena uloge korisnika {0} je neuspešna: {1}",
   "Charge": "Naplati",

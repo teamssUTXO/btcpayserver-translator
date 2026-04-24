@@ -108,6 +108,41 @@ public class CliTests
         }
     }
 
+    [Fact]
+    public async Task ValidatePacks_WithSuspiciousEntries_ReturnsNonZero()
+    {
+        var outputDirectory = CreateTempDirectory();
+        var translationFile = Path.Combine(outputDirectory, "french.json");
+
+        try
+        {
+            await File.WriteAllTextAsync(translationFile, """
+                {
+                  "hello": "bonjour",
+                  "prompt": "please provide the english text"
+                }
+                """);
+
+            var result = await CliTestHost.RunAsync(
+                ["validate-packs"],
+                new Dictionary<string, string?>
+                {
+                    ["Translation__OutputDirectory"] = outputDirectory
+                });
+
+            Assert.NotEqual(0, result.ExitCode);
+            Assert.Contains("Validation completed", result.CombinedOutput);
+            Assert.Contains("Suspicious LLM/meta-response content", result.CombinedOutput);
+        }
+        finally
+        {
+            if (Directory.Exists(outputDirectory))
+            {
+                Directory.Delete(outputDirectory, recursive: true);
+            }
+        }
+    }
+
     private static string CreateTempDirectory()
     {
         var directory = Path.Combine(Path.GetTempPath(), "BTCPayTranslator.CliTests", Guid.NewGuid().ToString("N"));

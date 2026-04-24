@@ -57,7 +57,8 @@ public class BaseTranslationServiceTests
 
         Assert.False(result.Success);
         Assert.Contains("API error", result.Error);
-        Assert.Equal(2, handler.CallCount);
+        // maxRetries raised from 2 to 3 in PR #51 generation-hardening merge.
+        Assert.Equal(3, handler.CallCount);
 
         service.Dispose();
     }

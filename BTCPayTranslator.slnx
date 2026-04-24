@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/Misc/">
+    <File Path="README.md" />
+    <File Path=".github/workflows/tests.yml" />
+  </Folder>
+  <Project Path="Translator.Tests/BTCPayTranslator.Tests.csproj" />
+  <Project Path="Translator/BTCPayTranslator.csproj" />
+</Solution>

@@ -105,7 +105,7 @@ public class LanguagePackValidator
                     continue;
                 }
 
-                if (TranslationValidationRules.IsShortKeyEnglishFallback(key, value, Path.GetFileNameWithoutExtension(filePath)))
+                if (TranslationValidationRules.IsShortKeyEnglishFallback(key, value))
                 {
                     issues.Add(new ValidationIssue(Path.GetFileName(filePath), key, "Common UI label left untranslated (value equals English key)"));
                     if (fix)

@@ -103,6 +103,16 @@ internal static class TranslationValidationRules
     };
 
     // Focused hotspot keys that have repeatedly been contaminated with English fallback values.
+    //
+    // NOTE on legitimate identical-to-English entries: some locales can have a hotspot key
+    // whose correct translation IS the same as the English source (loan-words, protocol/brand
+    // names used as-is, short commands adopted verbatim). When that happens the validator
+    // will surface a false-positive "Common UI label left untranslated" warning for that
+    // (file, key) pair. The right response is usually to provide a proper translation so
+    // UIs render consistently across locales (e.g. Serbian 'RESET' -> 'RESETUJ'); if the
+    // word genuinely has no localized form, consider adding a per-locale allowlist to
+    // IsShortKeyEnglishFallback rather than removing the key from this set (which would
+    // weaken detection globally).
     private static readonly HashSet<string> ShortKeyHotspotKeys = new(StringComparer.Ordinal)
     {
         "Change Role",
@@ -131,13 +141,6 @@ internal static class TranslationValidationRules
         "More information...",
     };
 
-    // Per-locale exceptions for hotspot keys that legitimately remain identical to the
-    // English key in certain languages (e.g. borrowed words, protocol/brand names used as-is).
-    // Keyed by filename (lowercase, without the .json extension) -> set of allowed identical-to-key entries.
-    private static readonly Dictionary<string, HashSet<string>> LocaleHotspotAllowlist = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ["serbian"] = new(StringComparer.Ordinal) { "RESET" },
-    };
 
     private static readonly HashSet<string> TechnicalAllowTokens = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -187,26 +190,16 @@ internal static class TranslationValidationRules
 
     /// <summary>
     /// Detects short, common UI keys (Confirm, Continue, Yes, etc.) that were
-    /// left as English instead of being translated. Accepts an optional locale
-    /// hint so per-locale allowlists can suppress legitimate identical-to-English
-    /// entries (e.g. 'RESET' in Serbian).
+    /// left as English instead of being translated. See the note on
+    /// ShortKeyHotspotKeys for how to handle genuinely identical-to-English
+    /// loan-word cases.
     /// </summary>
-    public static bool IsShortKeyEnglishFallback(string key, string value, string? localeName = null)
+    public static bool IsShortKeyEnglishFallback(string key, string value)
     {
         if (!string.Equals(key, value, StringComparison.Ordinal))
             return false;
 
-        if (!IsShortKeyFallbackHotspot(key))
-            return false;
-
-        if (localeName != null
-            && LocaleHotspotAllowlist.TryGetValue(localeName, out var allowed)
-            && allowed.Contains(key))
-        {
-            return false;
-        }
-
-        return true;
+        return IsShortKeyFallbackHotspot(key);
     }
 
     public static bool IsShortKeyFallbackHotspot(string key)

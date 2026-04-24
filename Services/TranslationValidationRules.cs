@@ -131,6 +131,14 @@ internal static class TranslationValidationRules
         "More information...",
     };
 
+    // Per-locale exceptions for hotspot keys that legitimately remain identical to the
+    // English key in certain languages (e.g. borrowed words, protocol/brand names used as-is).
+    // Keyed by filename (lowercase, without the .json extension) -> set of allowed identical-to-key entries.
+    private static readonly Dictionary<string, HashSet<string>> LocaleHotspotAllowlist = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["serbian"] = new(StringComparer.Ordinal) { "RESET" },
+    };
+
     private static readonly HashSet<string> TechnicalAllowTokens = new(StringComparer.OrdinalIgnoreCase)
     {
         "api",
@@ -179,14 +187,26 @@ internal static class TranslationValidationRules
 
     /// <summary>
     /// Detects short, common UI keys (Confirm, Continue, Yes, etc.) that were
-    /// left as English instead of being translated.
+    /// left as English instead of being translated. Accepts an optional locale
+    /// hint so per-locale allowlists can suppress legitimate identical-to-English
+    /// entries (e.g. 'RESET' in Serbian).
     /// </summary>
-    public static bool IsShortKeyEnglishFallback(string key, string value)
+    public static bool IsShortKeyEnglishFallback(string key, string value, string? localeName = null)
     {
         if (!string.Equals(key, value, StringComparison.Ordinal))
             return false;
 
-        return IsShortKeyFallbackHotspot(key);
+        if (!IsShortKeyFallbackHotspot(key))
+            return false;
+
+        if (localeName != null
+            && LocaleHotspotAllowlist.TryGetValue(localeName, out var allowed)
+            && allowed.Contains(key))
+        {
+            return false;
+        }
+
+        return true;
     }
 
     public static bool IsShortKeyFallbackHotspot(string key)

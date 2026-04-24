@@ -326,6 +326,16 @@ Return only the translated string.{strictRules}";
             return false;
         }
 
+        // Short hotspot keys (Confirm, Continue, Retry, Yes, Copy Code, ...) that round-trip
+        // unchanged are the same contamination class the reactive validator in
+        // LanguagePackValidator catches. Reject them at generation-time so they do not land
+        // in locale files in the first place.
+        if (TranslationValidationRules.IsShortKeyEnglishFallback(sourceText, translatedText))
+        {
+            reason = "Common UI label left untranslated (translation equals English source)";
+            return false;
+        }
+
         reason = string.Empty;
         return true;
     }

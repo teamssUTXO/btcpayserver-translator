@@ -445,8 +445,29 @@ class Program
 
             if (fix)
             {
+                // Fix passes are not strictly idempotent: a fix that removes one contamination
+                // can surface an adjacent contamination that was previously masked. Loop until
+                // a no-op pass (or an upper bound, to avoid pathological cycles).
+                const int maxFixPasses = 10;
+                var pass = 1;
+                while (result.Issues.Count > 0 && pass < maxFixPasses)
+                {
+                    pass++;
+                    logger.LogInformation(
+                        "Re-running with fix=true (pass {Pass} of up to {MaxPasses}) - {IssueCount} issues remain",
+                        pass, maxFixPasses, result.Issues.Count);
+                    result = await validator.ValidateAsync(true);
+                }
+
                 logger.LogInformation("Re-running validation after fixes");
                 result = await validator.ValidateAsync(false);
+
+                if (pass == maxFixPasses && result.Issues.Count > 0)
+                {
+                    logger.LogWarning(
+                        "--fix did not converge after {MaxPasses} passes. {RemainingCount} issue(s) remain and likely require manual review.",
+                        maxFixPasses, result.Issues.Count);
+                }
             }
 
             logger.LogInformation(

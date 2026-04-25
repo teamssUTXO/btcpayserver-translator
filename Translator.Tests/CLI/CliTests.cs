@@ -1,4 +1,3 @@
-using BTCPayTranslator.Tests.Infrastructure;
 using Xunit;
 
 namespace BTCPayTranslator.Tests.CLI;
@@ -96,8 +95,8 @@ public class CliTests
                 });
 
             Assert.NotEqual(0, result.ExitCode);
-            Assert.Contains("fr", result.CombinedOutput);
-            Assert.Contains("xx", result.CombinedOutput);
+            Assert.Contains("Batch update completed: 0/2 successful", result.CombinedOutput);
+            Assert.Contains("Unsupported language code: xx", result.CombinedOutput);
         }
         finally
         {

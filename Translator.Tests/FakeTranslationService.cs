@@ -1,7 +1,7 @@
 using BTCPayTranslator.Models;
 using BTCPayTranslator.Services;
 
-namespace BTCPayTranslator.Tests.Infrastructure;
+namespace BTCPayTranslator.Tests;
 
 internal sealed class FakeTranslationService : ITranslationService
 {

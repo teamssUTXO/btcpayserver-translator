@@ -1,6 +1,5 @@
 using BTCPayTranslator.Models;
 using BTCPayTranslator.Services;
-using BTCPayTranslator.Tests.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;

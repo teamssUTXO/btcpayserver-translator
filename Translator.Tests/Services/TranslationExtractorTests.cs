@@ -1,5 +1,4 @@
 using BTCPayTranslator.Services;
-using BTCPayTranslator.Tests.Infrastructure;
 using Microsoft.Extensions.Logging.Abstractions;
 using System.Net;
 using System.Text;

@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace BTCPayTranslator.Tests.Infrastructure;
+namespace BTCPayTranslator.Tests;
 
 internal static class CliTestHost
 {
@@ -48,7 +48,17 @@ internal static class CliTestHost
         var stdErrTask = process.StandardError.ReadToEndAsync();
 
         using var cts = new CancellationTokenSource(timeoutMilliseconds);
-        await process.WaitForExitAsync(cts.Token);
+        
+        try
+        {
+            await process.WaitForExitAsync(cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            process.Kill(entireProcessTree: true); // kill dotnet + msbuild childs
+            await Task.WhenAll(stdOutTask, stdErrTask); // clear pipes to prevent leaks
+            throw;
+        }
 
         var stdOut = await stdOutTask;
         var stdErr = await stdErrTask;

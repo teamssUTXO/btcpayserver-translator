@@ -1,4 +1,4 @@
-namespace BTCPayTranslator.Tests.Infrastructure;
+namespace BTCPayTranslator.Tests;
 
 internal sealed class QueueHttpMessageHandler : HttpMessageHandler
 {

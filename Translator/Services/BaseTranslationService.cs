@@ -12,17 +12,18 @@ using Microsoft.Extensions.Logging;
 
 namespace BTCPayTranslator.Services;
 
-public class BaseTranslationService : ITranslationService
+public class BaseTranslationService : ITranslationService, IDisposable
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<BaseTranslationService> _logger;
     private readonly string _apiKey;
     private readonly string _model;
     private readonly SemaphoreSlim _semaphore;
+    private readonly TimeProvider _timeProvider;
 
     public string ProviderName => "OpenRouter Fast";
 
-    public BaseTranslationService(HttpClient httpClient, IConfiguration configuration, ILogger<BaseTranslationService> logger)
+    public BaseTranslationService(HttpClient httpClient, IConfiguration configuration, ILogger<BaseTranslationService> logger, TimeProvider? timeProvider = null)
     {
         _httpClient = httpClient;
         _logger = logger;
@@ -38,6 +39,8 @@ public class BaseTranslationService : ITranslationService
 
         // Optimized for speed but still safe
         _semaphore = new SemaphoreSlim(2); // 2 concurrent requests max to avoid rate limits
+        
+        _timeProvider = timeProvider ?? TimeProvider.System;
 
         _logger.LogInformation("Fast Translation Service initialized - Model: {Model}", _model);
     }
@@ -100,7 +103,7 @@ public class BaseTranslationService : ITranslationService
                         return new TranslationResponse(request.Key, string.Empty, false,
                             $"API error: {response.StatusCode}");
                     }
-                    await Task.Delay(1000); // Quick retry delay
+                    await Task.Delay(TimeSpan.FromSeconds(1), _timeProvider); // Quick retry delay
                     continue;
                 }
 
@@ -112,7 +115,7 @@ public class BaseTranslationService : ITranslationService
                         return new TranslationResponse(request.Key, string.Empty, false,
                             "HTML error response");
                     }
-                    await Task.Delay(1000);
+                    await Task.Delay(TimeSpan.FromSeconds(1), _timeProvider);
                     continue;
                 }
 
@@ -142,7 +145,7 @@ public class BaseTranslationService : ITranslationService
                             }
 
                             lastFailureWasValidation = true;
-                            await Task.Delay(800);
+                            await Task.Delay(TimeSpan.FromSeconds(0,800), _timeProvider);
                             continue;
                         }
 
@@ -162,7 +165,7 @@ public class BaseTranslationService : ITranslationService
                 {
                     return new TranslationResponse(request.Key, string.Empty, false, ex.Message);
                 }
-                await Task.Delay(500); // Quick retry
+                await Task.Delay(TimeSpan.FromSeconds(0,500), _timeProvider); // Quick retry
             }
         }
 
@@ -210,7 +213,7 @@ public class BaseTranslationService : ITranslationService
                 {
                     _semaphore.Release();
                     // Small delay to avoid overwhelming the API
-                    await Task.Delay(300); // Increased delay to avoid rate limits
+                    await Task.Delay(TimeSpan.FromSeconds(0,300), _timeProvider); // Increased delay to avoid rate limits
                 }
             });
 
@@ -220,7 +223,7 @@ public class BaseTranslationService : ITranslationService
             // Brief pause between chunks
             if (chunks.Count() > 1)
             {
-                await Task.Delay(500); // Half second between chunks
+                await Task.Delay(TimeSpan.FromSeconds(0,500), _timeProvider);; // Half second between chunks
             }
         }
 
@@ -255,11 +258,6 @@ public class BaseTranslationService : ITranslationService
         {
             yield return items.Skip(i).Take(chunkSize).ToList();
         }
-    }
-
-    public void Dispose()
-    {
-        _semaphore?.Dispose();
     }
 
     private static string BuildSystemPrompt(string targetLanguage, bool strictMode)
@@ -338,5 +336,10 @@ Return only the translated string.{strictRules}";
 
         reason = string.Empty;
         return true;
+    }
+    
+    public void Dispose()
+    {
+        _semaphore?.Dispose();
     }
 }

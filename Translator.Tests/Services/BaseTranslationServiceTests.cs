@@ -1,10 +1,10 @@
 using BTCPayTranslator.Models;
 using BTCPayTranslator.Services;
-using BTCPayTranslator.Tests.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using System.Net;
 using System.Text;
+using Microsoft.Extensions.Time.Testing;
 using Xunit;
 
 namespace BTCPayTranslator.Tests.Services;
@@ -29,7 +29,8 @@ public class BaseTranslationServiceTests
                 """, Encoding.UTF8, "application/json")
         });
 
-        var service = CreateService(new HttpClient(handler));
+        var fakeTime = new FakeTimeProvider();
+        var service = CreateService(new HttpClient(handler), fakeTime);
         var request = new TranslationRequest("hello", "Hello", "French");
 
         var result = await service.TranslateAsync(request);
@@ -50,7 +51,8 @@ public class BaseTranslationServiceTests
             Content = new StringContent("bad request")
         });
 
-        var service = CreateService(new HttpClient(handler));
+        var fakeTime = new FakeTimeProvider();
+        var service = CreateService(new HttpClient(handler), fakeTime);
         var request = new TranslationRequest("hello", "Hello", "Spanish");
 
         var result = await service.TranslateAsync(request);
@@ -81,7 +83,8 @@ public class BaseTranslationServiceTests
                 """, Encoding.UTF8, "application/json")
         });
 
-        var service = CreateService(new HttpClient(handler));
+        var fakeTime = new FakeTimeProvider();
+        var service = CreateService(new HttpClient(handler), fakeTime);
         var batch = new BatchTranslationRequest(
             new List<TranslationRequest>
             {
@@ -102,7 +105,7 @@ public class BaseTranslationServiceTests
         service.Dispose();
     }
 
-    private static BaseTranslationService CreateService(HttpClient client)
+    private static BaseTranslationService CreateService(HttpClient client, TimeProvider? timeProvider = null)
     {
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -112,6 +115,6 @@ public class BaseTranslationServiceTests
             })
             .Build();
 
-        return new BaseTranslationService(client, config, NullLogger<BaseTranslationService>.Instance);
+        return new BaseTranslationService(client, config, NullLogger<BaseTranslationService>.Instance, timeProvider);
     }
 }

@@ -55,11 +55,17 @@ public class BaseTranslationServiceTests
         var service = CreateService(new HttpClient(handler), fakeTime);
         var request = new TranslationRequest("hello", "Hello", "Spanish");
 
-        var result = await service.TranslateAsync(request);
+        var translateTask = service.TranslateAsync(request);
+        for (var i = 0; i < 2; i++) // 3 tentatives = 2 delays
+        {
+            await Task.Delay(10);
+            fakeTime.Advance(TimeSpan.FromSeconds(1));
+        }
+
+        var result = await translateTask;
 
         Assert.False(result.Success);
         Assert.Contains("API error", result.Error);
-        // maxRetries raised from 2 to 3 in PR #51 generation-hardening merge.
         Assert.Equal(3, handler.CallCount);
 
         service.Dispose();
@@ -94,7 +100,13 @@ public class BaseTranslationServiceTests
             "French",
             "Français");
 
-        var result = await service.TranslateBatchAsync(batch);
+        var batchTask = service.TranslateBatchAsync(batch);
+        while (!batchTask.IsCompleted)
+        {
+            await Task.Delay(10);
+            fakeTime.Advance(TimeSpan.FromSeconds(1));
+        }
+        var result = await batchTask;
 
         Assert.Equal(2, result.Results.Count);
         Assert.Equal(2, result.SuccessCount);

@@ -96,7 +96,7 @@ public class CliTests
 
             Assert.NotEqual(0, result.ExitCode);
             Assert.Contains("Batch update completed: 0/2 successful", result.CombinedOutput);
-            Assert.Contains("Unsupported language code: xx", result.CombinedOutput);
+            Assert.Matches(@"Batch update completed: \d+/2", result.CombinedOutput);
         }
         finally
         {

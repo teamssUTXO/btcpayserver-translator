@@ -59,10 +59,12 @@ internal static class CliTestHost
             {
                 process.Kill(entireProcessTree: true);
             }
-            catch (InvalidOperationException) {}
+            catch (InvalidOperationException) { /* already exited */ }
+            catch (System.ComponentModel.Win32Exception) { /* exiting / access denied */ }
 
-            var partialOut = await stdOutTask;
-            var partialErr = await stdErrTask;
+            await Task.WhenAny(Task.WhenAll(stdOutTask, stdErrTask), Task.Delay(2000));
+            var partialOut = stdOutTask.IsCompletedSuccessfully ? stdOutTask.Result : string.Empty;
+            var partialErr = stdErrTask.IsCompletedSuccessfully ? stdErrTask.Result : string.Empty;
             throw new TimeoutException(
                 $"CLI did not exit within {timeoutMilliseconds} ms.\nStdOut: {partialOut}\nStdErr: {partialErr}");
         }

@@ -119,6 +119,9 @@ public class BaseTranslationServiceTests
 
     private static BaseTranslationService CreateService(HttpClient client, TimeProvider? timeProvider = null)
     {
+        Environment.SetEnvironmentVariable("OPENROUTER_API_KEY", null);
+        Environment.SetEnvironmentVariable("OPENROUTER_MODEL", null);
+
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {

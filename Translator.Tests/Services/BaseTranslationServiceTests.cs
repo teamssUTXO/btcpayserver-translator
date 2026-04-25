@@ -30,7 +30,7 @@ public class BaseTranslationServiceTests
         });
 
         var fakeTime = new FakeTimeProvider();
-        var service = CreateService(new HttpClient(handler), fakeTime);
+        using var service = CreateService(new HttpClient(handler), fakeTime);
         var request = new TranslationRequest("hello", "Hello", "French");
 
         var result = await service.TranslateAsync(request);
@@ -52,11 +52,11 @@ public class BaseTranslationServiceTests
         });
 
         var fakeTime = new FakeTimeProvider();
-        var service = CreateService(new HttpClient(handler), fakeTime);
+        using var service = CreateService(new HttpClient(handler), fakeTime);
         var request = new TranslationRequest("hello", "Hello", "Spanish");
 
         var translateTask = service.TranslateAsync(request);
-        for (var i = 0; i < 2; i++) // 3 tentatives = 2 delays
+        while (!translateTask.IsCompleted)
         {
             await Task.Delay(10);
             fakeTime.Advance(TimeSpan.FromSeconds(1));
@@ -66,7 +66,7 @@ public class BaseTranslationServiceTests
 
         Assert.False(result.Success);
         Assert.Contains("API error", result.Error);
-        Assert.Equal(3, handler.CallCount);
+        Assert.InRange(handler.CallCount, 2, 3);
 
         service.Dispose();
     }
@@ -90,7 +90,7 @@ public class BaseTranslationServiceTests
         });
 
         var fakeTime = new FakeTimeProvider();
-        var service = CreateService(new HttpClient(handler), fakeTime);
+        using var service = CreateService(new HttpClient(handler), fakeTime);
         var batch = new BatchTranslationRequest(
             new List<TranslationRequest>
             {

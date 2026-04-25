@@ -55,9 +55,16 @@ internal static class CliTestHost
         }
         catch (OperationCanceledException)
         {
-            process.Kill(entireProcessTree: true); // kill dotnet + msbuild childs
-            await Task.WhenAll(stdOutTask, stdErrTask); // clear pipes to prevent leaks
-            throw;
+            try
+            {
+                process.Kill(entireProcessTree: true);
+            }
+            catch (InvalidOperationException) {}
+
+            var partialOut = await stdOutTask;
+            var partialErr = await stdErrTask;
+            throw new TimeoutException(
+                $"CLI did not exit within {timeoutMilliseconds} ms.\nStdOut: {partialOut}\nStdErr: {partialErr}");
         }
 
         var stdOut = await stdOutTask;

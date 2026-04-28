@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace BTCPayTranslator.Models;
 
@@ -118,5 +120,16 @@ public static class SupportedLanguages
     public static IEnumerable<LanguageInfo> GetAllLanguages()
     {
         return Languages.Values;
+    }
+
+    public static (string Code, LanguageInfo)? GetLanguageInfoByName(string name)
+    {
+        var match = Languages.FirstOrDefault(kvp =>
+            kvp.Value.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+
+        if (match.Key is null)
+            return null;
+
+        return (match.Key, match.Value);
     }
 }

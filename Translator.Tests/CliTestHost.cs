@@ -62,7 +62,7 @@ internal static class CliTestHost
             catch (InvalidOperationException) { /* already exited */ }
             catch (System.ComponentModel.Win32Exception) { /* exiting / access denied */ }
 
-            await Task.WhenAny(Task.WhenAll(stdOutTask, stdErrTask), Task.Delay(2000));
+            await Task.WhenAny(Task.WhenAll(stdOutTask, stdErrTask), Task.Delay(2000, cts.Token));
             var partialOut = stdOutTask.IsCompletedSuccessfully ? stdOutTask.Result : string.Empty;
             var partialErr = stdErrTask.IsCompletedSuccessfully ? stdErrTask.Result : string.Empty;
             throw new TimeoutException(

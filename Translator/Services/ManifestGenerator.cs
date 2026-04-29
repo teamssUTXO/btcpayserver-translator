@@ -12,9 +12,11 @@ namespace BTCPayTranslator.Services;
 
 public class ManifestGenerator
 {
-    private static string GetUpdatedAt() => DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
+    private static string FormatUtcTimestamp(DateTime utc) =>
+        utc.ToString("yyyy-MM-ddTHH:mm:ssZ");
+
     private readonly ILogger<ManifestGenerator> _logger;
-    
+
     public ManifestGenerator(ILogger<ManifestGenerator> logger)
     {
         _logger = logger;
@@ -31,16 +33,15 @@ public class ManifestGenerator
             _logger.LogError(ex, "Couldn't find translation files in {Directory}", translationDirectoryPath);
             throw new Exception("Couldn't find translation files", ex);
         }
-        
     }
-    
+
     private async Task<string?> HashFiles(string filePath)
     {
         using var sha256 = SHA256.Create();
         try
         {
             await using var stream = File.OpenRead(filePath);
-            var hashBytes = await  sha256.ComputeHashAsync(stream);
+            var hashBytes = await sha256.ComputeHashAsync(stream);
             return Convert.ToHexString(hashBytes).ToLower();
         }
         catch (Exception ex)
@@ -50,11 +51,11 @@ public class ManifestGenerator
         }
     }
 
-    private string? GetMaintainer(string filePath)
+    private async Task<string?> GetMaintainer(string filePath)
     {
         try
         {
-            var json = File.ReadAllText(filePath);
+            var json = await File.ReadAllTextAsync(filePath);
             using var document = JsonDocument.Parse(json);
             var root = document.RootElement;
             if (root.TryGetProperty("_maintainer", out var maintainer))
@@ -72,13 +73,13 @@ public class ManifestGenerator
         }
     }
 
-    private async Task<ManifestEntry> BuildEntry(string filePath,ManifestEntry? existingEntry)
+    private async Task<ManifestEntry> BuildEntry(string filePath, ManifestEntry? existingEntry, string runUpdatedAt)
     {
         try
         {
             var fileName = Path.GetFileNameWithoutExtension(filePath);
 
-            var result = SupportedLanguages.GetLanguageInfoByName(fileName);
+            var result = SupportedLanguages.GetLanguageInfoByFileName(fileName);
             if (!result.HasValue)
             {
                 _logger.LogError("No language info mapping found for translation file {FileName}", fileName);
@@ -93,9 +94,13 @@ public class ManifestGenerator
                 throw new Exception($"Hash generation failed for {filePath}");
             }
 
-            var maintainer = GetMaintainer(filePath);
-            
-            var updatedAt = existingEntry?.Sha == hashedFile ? existingEntry!.Updated : GetUpdatedAt();
+            var maintainer = await GetMaintainer(filePath);
+
+            // SHA-stable Updated: preserve the previous timestamp when the file hasn't
+            // changed since the last manifest. Otherwise stamp with the run's single
+            // UTC timestamp (captured once in GenerateManifest, not per file - so
+            // multiple changed files in one run share one timestamp).
+            var updatedAt = existingEntry?.Sha == hashedFile ? existingEntry!.Updated : runUpdatedAt;
 
             var entry = new ManifestEntry(
                 Code: code,
@@ -106,7 +111,7 @@ public class ManifestGenerator
                 Sha: hashedFile,
                 Maintainer: maintainer,
                 Updated: updatedAt);
-            
+
             return entry;
         }
         catch (Exception ex)
@@ -121,14 +126,18 @@ public class ManifestGenerator
         try
         {
             _logger.LogInformation("Starting manifest generation");
-            
+
+            // Capture the run's UTC stamp once so all changed files in this run share
+            // one Updated value rather than drifting per file.
+            var runUpdatedAt = FormatUtcTimestamp(DateTime.UtcNow);
+
             Manifest? existingManifest = null;
             if (File.Exists(manifestOutputPath))
             {
                 var existingJson = await File.ReadAllTextAsync(manifestOutputPath);
                 existingManifest = JsonSerializer.Deserialize<Manifest>(existingJson);
             }
-            
+
             var files = GetTranslationFiles(translationDirectoryPath)?.ToArray();
             if (files == null || files.Length == 0)
             {
@@ -141,8 +150,13 @@ public class ManifestGenerator
             {
                 var existingEntry = existingManifest?.Languages
                     .FirstOrDefault(e => e.File == "translations/" + Path.GetFileName(file));
-    
-                var entry = await BuildEntry(file, existingEntry);
+
+                // Fail-fast posture: a per-file failure (missing language mapping,
+                // invalid JSON, unreadable hash) aborts the whole run rather than
+                // emitting a partial manifest. Recovery path is the manifest.yml
+                // workflow_dispatch trigger - fix the offending file and re-run
+                // manually rather than letting a broken language silently linger.
+                var entry = await BuildEntry(file, existingEntry, runUpdatedAt);
                 entries.Add(entry);
             }
 
@@ -153,13 +167,12 @@ public class ManifestGenerator
                 WriteIndented = true,
                 Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
             });
- 
-            await File.WriteAllTextAsync(
-                manifestOutputPath, 
-                manifestJson
-            );
 
-            _logger.LogInformation("Manifest generated with {EntryCount}/{FileCount} entries at {ManifestPath}", entries.Count, files.Length, manifestOutputPath);
+            await File.WriteAllTextAsync(manifestOutputPath, manifestJson);
+
+            _logger.LogInformation(
+                "Manifest generated with {EntryCount}/{FileCount} entries at {ManifestPath}",
+                entries.Count, files.Length, manifestOutputPath);
             return true;
         }
         catch (Exception ex)

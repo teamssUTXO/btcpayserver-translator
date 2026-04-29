@@ -5,7 +5,13 @@ on:
     branches: [ main ]
     paths:
       - 'Translator/translations/**.json'
-    
+  # Manual re-run path. The generator is fail-fast: a single broken
+  # translation file (missing language mapping, invalid JSON, unreadable
+  # hash) aborts the whole run and the auto-trigger does not retry.
+  # Fix the offending file, then dispatch this workflow manually from
+  # the Actions tab to refresh the manifest.
+  workflow_dispatch:
+
 permissions:
   contents: write
   

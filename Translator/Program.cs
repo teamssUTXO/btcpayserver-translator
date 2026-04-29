@@ -48,7 +48,7 @@ class Program
             CreateBatchUpdateCommand(serviceProvider),
             CreateUpdateAllCommand(serviceProvider),
             CreateValidatePacksCommand(serviceProvider),
-            CreateManifest(serviceProvider)
+            CreateGenerateManifestCommand(serviceProvider)
         };
 
         return await rootCommand.InvokeAsync(args);
@@ -498,38 +498,49 @@ class Program
         return command;
     }
     
-    private static Command CreateManifest(ServiceProvider serviceProvider)
+    private static Command CreateGenerateManifestCommand(ServiceProvider serviceProvider)
     {
+        // Anchor default paths to the Translator project directory rather than to
+        // the caller's cwd. The generator should produce the same manifest whether
+        // a contributor runs `dotnet run --project Translator` from the repo root,
+        // from inside Translator/, or via the `manifest.yml` workflow with its
+        // explicit `working-directory: Translator`. Walk up from
+        // AppContext.BaseDirectory looking for BTCPayTranslator.csproj; the
+        // containing directory is the project root.
+        var projectDirectory = ResolveProjectDirectory();
+        var defaultTranslationPath = Path.Combine(projectDirectory, "translations");
+        var defaultManifestPath = Path.Combine(projectDirectory, "..", "manifest.json");
+
         var translationPathOption = new Option<string>(
             "--translation-path",
-            "Path to the translations folder")
+            "Path to the translations folder. Defaults to <project-dir>/translations.")
         {
             IsRequired = false
         };
-        translationPathOption.SetDefaultValue("./translations");
-        
+        translationPathOption.SetDefaultValue(defaultTranslationPath);
+
         var manifestPathOption = new Option<string>(
             "--manifest-path",
-            "Path where manifest.json will be written")
+            "Path where manifest.json will be written. Defaults to <repo-root>/manifest.json.")
         {
             IsRequired = false
         };
-        manifestPathOption.SetDefaultValue("../manifest.json");
+        manifestPathOption.SetDefaultValue(defaultManifestPath);
 
         var command = new Command("generate-manifest", "Generate the manifest.json from translation files")
         {
             translationPathOption,
             manifestPathOption,
         };
-        
+
         command.SetHandler(async (translationPath, manifestPath) =>
         {
             using var scope = serviceProvider.CreateScope();
             var generator = scope.ServiceProvider.GetRequiredService<ManifestGenerator>();
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-            
+
             logger.LogInformation("Starting manifest generation...");
-            
+
             var success = await generator.GenerateManifest(translationPath, manifestPath);
 
             if (!success)
@@ -537,11 +548,25 @@ class Program
                 logger.LogError("Failed to generate manifest");
                 Environment.Exit(1);
             }
-            
+
             logger.LogInformation("Manifest generated successfully at {manifestPath}", manifestPath);
         }, translationPathOption, manifestPathOption);
-        
+
         return command;
+    }
+
+    private static string ResolveProjectDirectory()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory != null)
+        {
+            if (File.Exists(Path.Combine(directory.FullName, "BTCPayTranslator.csproj")))
+                return directory.FullName;
+            directory = directory.Parent;
+        }
+        throw new DirectoryNotFoundException(
+            "Could not locate the Translator project directory (BTCPayTranslator.csproj) " +
+            "anywhere above AppContext.BaseDirectory.");
     }
 
 }

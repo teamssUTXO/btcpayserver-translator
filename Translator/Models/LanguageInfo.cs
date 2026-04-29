@@ -122,14 +122,44 @@ public static class SupportedLanguages
         return Languages.Values;
     }
 
-    public static (string Code, LanguageInfo)? GetLanguageInfoByName(string name)
+    // Explicit translation-file-basename -> language-code mapping. The keys are
+    // the lowercased basenames as they appear under Translator/translations/
+    // (e.g. `french.json` -> "french"), the values index into Languages above.
+    //
+    // This is the durable contract for the manifest generator: when a new
+    // translation file lands, its row must be added here. That's intentional -
+    // LanguageInfo.Name cannot uniquely resolve cases like "portuguese.json"
+    // (Brazil vs European - Languages key "pt" -> Name "Portuguese (Brazil)"),
+    // so an implicit name-based lookup would silently drop or mis-route
+    // entries. Keep this map small and explicit.
+    public static readonly IReadOnlyDictionary<string, string> FileNameToCode =
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["dutch"] = "nl",
+            ["french"] = "fr",
+            ["german"] = "de",
+            ["hindi"] = "hi",
+            ["indonesian"] = "id",
+            ["italian"] = "it",
+            ["japanese"] = "ja",
+            ["korean"] = "ko",
+            ["norwegian"] = "no",
+            ["portuguese"] = "pt",
+            ["russian"] = "ru",
+            ["serbian"] = "sr",
+            ["spanish"] = "es",
+            ["thai"] = "th",
+            ["turkish"] = "tr"
+        };
+
+    public static (string Code, LanguageInfo)? GetLanguageInfoByFileName(string fileName)
     {
-        var match = Languages.FirstOrDefault(kvp =>
-            kvp.Value.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
-
-        if (match.Key is null)
+        if (string.IsNullOrWhiteSpace(fileName))
             return null;
-
-        return (match.Key, match.Value);
+        if (!FileNameToCode.TryGetValue(fileName, out var code))
+            return null;
+        if (!Languages.TryGetValue(code, out var info))
+            return null;
+        return (code, info);
     }
 }

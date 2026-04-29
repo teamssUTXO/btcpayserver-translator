@@ -2269,7 +2269,7 @@
   "Your email server has not been configured.": "Votre serveur de messagerie n'a pas été configuré.",
   "Your existing recovery codes will no longer be valid!": "Vos codes de récupération existants ne seront plus valides !",
   "Your instance administrator has disabled the use of the Internal node for non-admin users.": "Votre administrateur de l'instance a désactivé l'utilisation du nœud interne pour les utilisateurs non-administrateurs.",
-  "Your node address: {0}": "Votre adresse de nœud : {0}",
+  "Your node address: {0}": "L'adresse de votre noeud : {0}",
   "Your password has been changed.": "Votre mot de passe a été modifié.",
   "Your password has been set by the user who invited you.": "Votre mot de passe a été défini par l'utilisateur qui vous a invité.",
   "Your password has been set.": "Votre mot de passe a été défini.",

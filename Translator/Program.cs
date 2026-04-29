@@ -47,7 +47,8 @@ class Program
             CreateUpdateCommand(serviceProvider),
             CreateBatchUpdateCommand(serviceProvider),
             CreateUpdateAllCommand(serviceProvider),
-            CreateValidatePacksCommand(serviceProvider)
+            CreateValidatePacksCommand(serviceProvider),
+            CreateManifest(serviceProvider)
         };
 
         return await rootCommand.InvokeAsync(args);
@@ -69,6 +70,8 @@ class Program
         services.AddTransient<LanguagePackValidator>();
 
         services.AddTransient<ITranslationService, BaseTranslationService>();
+
+        services.AddTransient<ManifestGenerator>();
     }
 
     private static Option<string?> CreateBTCPayUrlOption() =>
@@ -492,6 +495,52 @@ class Program
             }
         }, fixOption);
 
+        return command;
+    }
+    
+    private static Command CreateManifest(ServiceProvider serviceProvider)
+    {
+        var translationPathOption = new Option<string>(
+            "--translation-path",
+            "Path to the translations folder")
+        {
+            IsRequired = false
+        };
+        translationPathOption.SetDefaultValue("./translations");
+        
+        var manifestPathOption = new Option<string>(
+            "--manifest-path",
+            "Path where manifest.json will be written")
+        {
+            IsRequired = false
+        };
+        manifestPathOption.SetDefaultValue("../manifest.json");
+
+        var command = new Command("generate-manifest", "Generate the manifest.json from translation files")
+        {
+            translationPathOption,
+            manifestPathOption,
+        };
+        
+        command.SetHandler(async (translationPath, manifestPath) =>
+        {
+            using var scope = serviceProvider.CreateScope();
+            var generator = scope.ServiceProvider.GetRequiredService<ManifestGenerator>();
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+            
+            logger.LogInformation("Starting manifest generation...");
+            
+            var success = await generator.GenerateManifest(translationPath, manifestPath);
+
+            if (!success)
+            {
+                logger.LogError("Failed to generate manifest");
+                Environment.Exit(1);
+            }
+            
+            logger.LogInformation("Manifest generated successfully at {manifestPath}", manifestPath);
+        }, translationPathOption, manifestPathOption);
+        
         return command;
     }
 

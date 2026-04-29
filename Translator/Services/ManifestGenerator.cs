@@ -10,31 +10,25 @@ using Microsoft.Extensions.Logging;
 
 namespace BTCPayTranslator.Services;
 
-// TODO : expose this with a CLI command
-
 public class ManifestGenerator
 {
-    private readonly string _translationPath;
-    private readonly string _manifestOutputPath;
-    private static DateTime GetUpdatedAt() => DateTime.UtcNow;
+    private static string GetUpdatedAt() => DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ");
     private readonly ILogger<ManifestGenerator> _logger;
     
-    public ManifestGenerator(ILogger<ManifestGenerator> logger, string translationPath, string manifestOutputPath)
+    public ManifestGenerator(ILogger<ManifestGenerator> logger)
     {
         _logger = logger;
-        _translationPath =  translationPath;
-        _manifestOutputPath = manifestOutputPath; 
     }
 
-    private IEnumerable<string>? GetTranslationFiles()
+    private IEnumerable<string>? GetTranslationFiles(string translationDirectoryPath)
     {
         try
         {
-            return Directory.GetFiles(_translationPath, "*.json");
+            return Directory.GetFiles(translationDirectoryPath, "*.json");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Couldn't find translation files in {Directory}", _translationPath);
+            _logger.LogError(ex, "Couldn't find translation files in {Directory}", translationDirectoryPath);
             throw new Exception("Couldn't find translation files", ex);
         }
         
@@ -122,12 +116,12 @@ public class ManifestGenerator
         }
     }
 
-    public async Task<bool> GenerateManifest()
+    public async Task<bool> GenerateManifest(string translationDirectoryPath, string manifestOutputPath)
     {
         try
         {
             _logger.LogInformation("Starting manifest generation");
-            var files = GetTranslationFiles()?.ToArray();
+            var files = GetTranslationFiles(translationDirectoryPath)?.ToArray();
             if (files == null || files.Length == 0)
             {
                 _logger.LogError("No translation files found to generate manifest");
@@ -145,15 +139,16 @@ public class ManifestGenerator
 
             var manifestJson = JsonSerializer.Serialize(manifest, new JsonSerializerOptions
             {
-                WriteIndented = true
+                WriteIndented = true,
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
             });
  
             await File.WriteAllTextAsync(
-                _manifestOutputPath, 
+                manifestOutputPath, 
                 manifestJson
             );
 
-            _logger.LogInformation("Manifest generated with {EntryCount}/{FileCount} entries at {ManifestPath}", entries.Count, files.Length, _manifestOutputPath);
+            _logger.LogInformation("Manifest generated with {EntryCount}/{FileCount} entries at {ManifestPath}", entries.Count, files.Length, manifestOutputPath);
             return true;
         }
         catch (Exception ex)

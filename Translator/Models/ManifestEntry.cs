@@ -11,7 +11,7 @@ public record ManifestEntry(
     string File, // "translations/french.json"
     string Sha, // "abc123..."
     string? Maintainer, // "teamssUTXO|https://github.com/teamssUTXO"
-    DateTime Updated // 2026-04-12T10:30:00Z
+    string Updated // 2026-04-12T10:30:00Z
 );
 
 public record Manifest(

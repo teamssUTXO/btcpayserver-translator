@@ -28,7 +28,8 @@ jobs:
         run: dotnet build --configuration Release
         
       - name: Generate manifest.json
-        run: dotnet run --project Translator -- generate-manifest
+        run: dotnet run -- generate-manifest
+        working-directory: Translator
         
       - name: Commit
         uses: EndBug/add-and-commit@v10

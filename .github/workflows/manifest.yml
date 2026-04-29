@@ -1,0 +1,40 @@
+﻿name: Generate Manifest
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'Translator/translations/**.json'
+    
+permissions:
+  contents: write
+  
+jobs:
+  manifest-generation:
+    runs-on: ubuntu-latest
+    env:
+      CI: true
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build solution
+        run: dotnet build --configuration Release
+        
+      - name: Generate manifest.json
+        run: dotnet run --project Translator -- generate-manifest
+        
+      - name: Commit
+        uses: EndBug/add-and-commit@v10
+        with:
+          default_author: github_actor
+          add: ./manifest.json # if the working directory is the repo root dir
+          message: "Update manifest.json"
+          commit: ""
+          push: true

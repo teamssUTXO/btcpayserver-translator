@@ -79,7 +79,7 @@ public class ManifestGenerator
         {
             var fileName = Path.GetFileNameWithoutExtension(filePath);
 
-            var result = SupportedLanguages.GetLanguageInfoByFileName(fileName);
+            var result = SupportedLanguages.GetLanguageInfoByName(fileName);
             if (!result.HasValue)
             {
                 _logger.LogError("No language info mapping found for translation file {FileName}", fileName);
@@ -95,11 +95,7 @@ public class ManifestGenerator
             }
 
             var maintainer = await GetMaintainer(filePath);
-
-            // SHA-stable Updated: preserve the previous timestamp when the file hasn't
-            // changed since the last manifest. Otherwise stamp with the run's single
-            // UTC timestamp (captured once in GenerateManifest, not per file - so
-            // multiple changed files in one run share one timestamp).
+            
             var updatedAt = existingEntry?.Sha == hashedFile ? existingEntry!.Updated : runUpdatedAt;
 
             var entry = new ManifestEntry(
@@ -127,8 +123,6 @@ public class ManifestGenerator
         {
             _logger.LogInformation("Starting manifest generation");
 
-            // Capture the run's UTC stamp once so all changed files in this run share
-            // one Updated value rather than drifting per file.
             var runUpdatedAt = FormatUtcTimestamp(DateTime.UtcNow);
 
             Manifest? existingManifest = null;
@@ -138,7 +132,7 @@ public class ManifestGenerator
                 existingManifest = JsonSerializer.Deserialize<Manifest>(existingJson);
             }
 
-            var files = GetTranslationFiles(translationDirectoryPath)?.ToArray();
+            var files = GetTranslationFiles(translationDirectoryPath)?.OrderBy(f=> f).ToArray();
             if (files == null || files.Length == 0)
             {
                 _logger.LogError("No translation files found to generate manifest");
@@ -151,11 +145,6 @@ public class ManifestGenerator
                 var existingEntry = existingManifest?.Languages
                     .FirstOrDefault(e => e.File == "translations/" + Path.GetFileName(file));
 
-                // Fail-fast posture: a per-file failure (missing language mapping,
-                // invalid JSON, unreadable hash) aborts the whole run rather than
-                // emitting a partial manifest. Recovery path is the manifest.yml
-                // workflow_dispatch trigger - fix the offending file and re-run
-                // manually rather than letting a broken language silently linger.
                 var entry = await BuildEntry(file, existingEntry, runUpdatedAt);
                 entries.Add(entry);
             }
@@ -170,9 +159,7 @@ public class ManifestGenerator
 
             await File.WriteAllTextAsync(manifestOutputPath, manifestJson);
 
-            _logger.LogInformation(
-                "Manifest generated with {EntryCount}/{FileCount} entries at {ManifestPath}",
-                entries.Count, files.Length, manifestOutputPath);
+            _logger.LogInformation("Manifest generated with {EntryCount}/{FileCount} entries at {ManifestPath}", entries.Count, files.Length, manifestOutputPath);
             return true;
         }
         catch (Exception ex)

@@ -500,20 +500,13 @@ class Program
     
     private static Command CreateGenerateManifestCommand(ServiceProvider serviceProvider)
     {
-        // Anchor default paths to the Translator project directory rather than to
-        // the caller's cwd. The generator should produce the same manifest whether
-        // a contributor runs `dotnet run --project Translator` from the repo root,
-        // from inside Translator/, or via the `manifest.yml` workflow with its
-        // explicit `working-directory: Translator`. Walk up from
-        // AppContext.BaseDirectory looking for BTCPayTranslator.csproj; the
-        // containing directory is the project root.
         var projectDirectory = ResolveProjectDirectory();
         var defaultTranslationPath = Path.Combine(projectDirectory, "translations");
         var defaultManifestPath = Path.Combine(projectDirectory, "..", "manifest.json");
 
         var translationPathOption = new Option<string>(
             "--translation-path",
-            "Path to the translations folder. Defaults to <project-dir>/translations.")
+            "Path to the translations folder. Defaults to <repo-root>/Translator/translations.")
         {
             IsRequired = false
         };

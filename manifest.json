@@ -101,6 +101,16 @@
       "Updated": "2026-05-01T08:45:19Z"
     },
     {
+      "Code": "ro",
+      "Bcp47": "ro",
+      "Name": "Romanian",
+      "Native": "Română",
+      "File": "translations/romanian.json",
+      "Sha": "fc81a3f301d30a5889e7934dc2549679438beafc58acb4e0a7a9b0e9f08d20fc",
+      "Maintainer": null,
+      "Updated": "2026-05-05T17:52:06Z"
+    },
+    {
       "Code": "ru",
       "Bcp47": "ru-RU",
       "Name": "Russian",

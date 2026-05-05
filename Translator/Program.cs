@@ -501,12 +501,12 @@ class Program
     private static Command CreateGenerateManifestCommand(ServiceProvider serviceProvider)
     {
         var projectDirectory = ResolveProjectDirectory();
-        var defaultTranslationPath = Path.Combine(projectDirectory, "translations");
+        var defaultTranslationPath = Path.Combine(projectDirectory, "..", "translations");
         var defaultManifestPath = Path.Combine(projectDirectory, "..", "manifest.json");
 
         var translationPathOption = new Option<string>(
             "--translation-path",
-            "Path to the translations folder. Defaults to <repo-root>/Translator/translations.")
+            "Path to the translations folder. Defaults to <repo-root>/translations.")
         {
             IsRequired = false
         };

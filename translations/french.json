@@ -409,7 +409,7 @@
   "Consider the invoice paid even if the paid amount is … % less than expected": "Considérer la facture comme payée même si le montant payé est … % inférieur au montant attendu",
   "Consider the invoice settled when the payment transaction …": "Considérer la facture comme réglée lorsque la transaction de paiement …",
   "Constant": "Constante",
-  "Constraints do not match any installed camera.": "Les contraintes ne correspondent à aucune caméra installée.",
+  "Constraints do not match any installed camera.": "Aucune caméra ne satisfait les contraintes spécifiées.",
   "Contact URL": "URL de contact",
   "Contact Us": "Contactez-nous",
   "Container Name": "Nom du conteneur",

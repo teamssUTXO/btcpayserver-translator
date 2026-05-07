@@ -16,9 +16,9 @@
       "Name": "French",
       "Native": "Français",
       "File": "translations/french.json",
-      "Sha": "178695b65cabc42b2b714070fc6d2fa61c5152a7f3df1ea9cb403982de215bba",
+      "Sha": "2f7e4d3df7378cdc3c0e2218d1caf32704eab14559820bcbd7a8954a19f9e00c",
       "Maintainer": "teamssUTXO|https://github.com/teamssUTXO",
-      "Updated": "2026-04-29T21:26:25Z"
+      "Updated": "2026-05-05T18:33:24Z"
     },
     {
       "Code": "de",
@@ -99,6 +99,16 @@
       "Sha": "470148039b8770f2168db8b078f9a35796a55142e1382b1b0f7de53b1e8e6a80",
       "Maintainer": "thgO-O|https://github.com/thgO-O",
       "Updated": "2026-05-01T08:45:19Z"
+    },
+    {
+      "Code": "ro",
+      "Bcp47": "ro",
+      "Name": "Romanian",
+      "Native": "Română",
+      "File": "translations/romanian.json",
+      "Sha": "fc81a3f301d30a5889e7934dc2549679438beafc58acb4e0a7a9b0e9f08d20fc",
+      "Maintainer": null,
+      "Updated": "2026-05-05T17:52:06Z"
     },
     {
       "Code": "ru",

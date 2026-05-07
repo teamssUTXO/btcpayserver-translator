@@ -4,7 +4,7 @@
     <File Path=".github/workflows/tests.yml" />
     <File Path=".github/workflows/manifest.yml" />
   </Folder>
-  <Folder Name="translations/">
+  <Folder Name="/translations/">
     <File Path="translations/**" />
   </Folder>
   <Project Path="Translator.Tests/BTCPayTranslator.Tests.csproj" />

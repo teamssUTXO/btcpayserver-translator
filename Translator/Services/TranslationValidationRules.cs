@@ -13,6 +13,13 @@ internal static class TranslationValidationRules
     private static readonly Regex HtmlTagRegex =
         new(@"<[^>]+>", RegexOptions.Compiled);
 
+    private static readonly Regex StructuralHtmlTagRegex =
+        new(@"<\s*/?\s*(strong|em|b|i|u|code|pre|kbd|small|sub|sup|mark|br|p|div|span|a|ul|ol|li|h[1-6]|table|thead|tbody|tr|td|th|abbr|del|ins|q|cite|var|samp)\b[^>]*>",
+            RegexOptions.Compiled | RegexOptions.IgnoreCase);
+    
+    private static readonly Regex MaintainerFieldRegex =
+        new(@"^[^|]+\|https://\S+$", RegexOptions.Compiled);
+
     private static readonly Regex WhitespaceRegex =
         new(@"\s+", RegexOptions.Compiled);
 
@@ -246,6 +253,41 @@ internal static class TranslationValidationRules
         return true;
     }
 
+    /// <summary>
+    /// Checks that the source and translation use the same multiset of structural HTML tags (case-insensitive).
+    /// </summary>
+    public static bool HasMatchingHtmlTags(string source, string translation)
+    {
+        var sourceTags = ExtractStructuralTagCounts(source);
+        var translationTags = ExtractStructuralTagCounts(translation);
+
+        if (sourceTags.Count != translationTags.Count)
+            return false;
+
+        foreach (var entry in sourceTags)
+        {
+            if (!translationTags.TryGetValue(entry.Key, out var count) || count != entry.Value)
+                return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Validates the shape of the _maintainer field that ManifestGenerator expects
+    /// </summary>
+    public static bool IsValidMaintainerValue(string? value)
+    {
+        // if language don't have maintainer
+        if (value is null)
+            return true;
+        
+        if (string.IsNullOrWhiteSpace(value))
+            return false;
+
+        return MaintainerFieldRegex.IsMatch(value.Trim());
+    }
+
     public static bool IsLikelySentenceFallback(string source, string translation)
     {
         if (!string.Equals(source, translation, StringComparison.Ordinal))
@@ -296,6 +338,26 @@ internal static class TranslationValidationRules
             {
                 counts[match.Value]++;
             }
+        }
+
+        return counts;
+    }
+
+    private static readonly Regex TagNameRegex = new(@"<\s*/?\s*([A-Za-z][A-Za-z0-9]*)", RegexOptions.Compiled);
+
+    private static Dictionary<string, int> ExtractStructuralTagCounts(string text)
+    {
+        var counts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (Match match in StructuralHtmlTagRegex.Matches(text))
+        {
+            var raw = match.Value;
+            var nameMatch = TagNameRegex.Match(raw);
+            if (!nameMatch.Success) continue;
+            var isClose = raw.TrimStart('<').TrimStart().StartsWith('/');
+            var key = (isClose ? "/" : string.Empty) + nameMatch.Groups[1].Value.ToLowerInvariant();
+            if (!counts.TryAdd(key, 1))
+                counts[key]++;
         }
 
         return counts;

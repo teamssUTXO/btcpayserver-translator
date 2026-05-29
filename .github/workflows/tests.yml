@@ -30,6 +30,12 @@ jobs:
       - name: Unit Tests
         run: dotnet test --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx"
 
+      - name: Validate translation packs
+        continue-on-error: true
+        env:
+          Translation__OutputDirectory: ${{ github.workspace }}/translations
+        run: dotnet run --project Translator/BTCPayTranslator.csproj --configuration Release --no-build -- validate-packs
+
       - name: Upload test logs
         if: always()
         uses: actions/upload-artifact@v4

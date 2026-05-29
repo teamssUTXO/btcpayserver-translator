@@ -73,6 +73,19 @@ public class LanguagePackValidator
             {
                 var key = property.Name;
                 var value = property.Value?.ToString() ?? string.Empty;
+                
+                if (key.Equals("_maintainer", StringComparison.Ordinal))
+                {
+                    var maintainerValue = property.Value?.Type == JTokenType.Null ? null : value;
+
+                    if (!TranslationValidationRules.IsValidMaintainerValue(maintainerValue))
+                    {
+                        issues.Add(new ValidationIssue(Path.GetFileName(filePath), key,
+                            "Invalid _maintainer value (expected '<display name or handle>|<https URL>')"));
+                    }
+                    continue;
+                }
+
                 totalEntries++;
 
                 if (TranslationValidationRules.IsSuspiciousMetaResponse(value))
@@ -112,6 +125,14 @@ public class LanguagePackValidator
                     {
                         fileChanged |= ApplyFix(property, key, value);
                     }
+                    continue;
+                }
+
+                if (!TranslationValidationRules.HasMatchingHtmlTags(key, value))
+                {
+                    issues.Add(new ValidationIssue(Path.GetFileName(filePath), key,
+                        "Structural HTML tag mismatch between source key and translation"));
+                    // Auto-fix is intentionally skipped here. Maintainer needs to re-anchor the markup by hand.
                 }
             }
 

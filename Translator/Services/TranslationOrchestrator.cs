@@ -581,7 +581,13 @@ public class TranslationOrchestrator
             return new RefreshResult(0, 0, 0, addedByFile);
         }
 
-        var filterCodes = languageCodes?.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var filterCodes = languageCodes is null
+            ? null
+            : languageCodes
+                .Where(c => !string.IsNullOrWhiteSpace(c))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (filterCodes is { Count: 0 })
+            filterCodes = null;
 
         var sourceTranslations = await GetSourceTranslationsAsync();
         _logger.LogInformation("Found {Count} strings in source", sourceTranslations.Count);

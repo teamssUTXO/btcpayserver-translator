@@ -249,6 +249,7 @@
   "Broadcast (Simple)": "بث بسيط",
   "Broadcast transaction": "بث المعاملة",
   "Browse all deposit addresses": "تصفح جميع عناوين الإيداع",
+  "Browse the invoices": "تصفح الفواتير",
   "Browser connection": "اتصال المتصفح",
 "BTCPay exposes Core Lightning's REST service for outside consumption, you will find connection information here.": "يوفر BTCPay خدمة REST الخاصة بـ Core Lightning للاستخدام الخارجي، ستجد معلومات الاتصال هنا.",
   "BTCPay is expecting you to access this website from <strong>": "يتوقع BTCPay منك الوصول إلى هذا الموقع من <strong>",

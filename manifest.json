@@ -1,6 +1,16 @@
 {
   "Languages": [
     {
+      "Code": "ar",
+      "Bcp47": "ar",
+      "Name": "Arabic",
+      "Native": "العربية",
+      "File": "translations/arabic.json",
+      "Sha": "ae60c19132a188f6c897385a3d4489f953d7afedaef1b59a6d4db529f2ff64dc",
+      "Maintainer": null,
+      "Updated": "2026-06-23T04:12:52Z"
+    },
+    {
       "Code": "nl",
       "Bcp47": "nl-NL",
       "Name": "Dutch",
